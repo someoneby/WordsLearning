@@ -1,4 +1,5 @@
 #pragma once
+#pragma one
 
 #include <string>
 

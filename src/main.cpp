@@ -1,30 +1,27 @@
 #include <iostream>
-#include "DatabaseHandlers/DatabaseHandler.hh"
+#include <locale.h>
 
+#include "DatabaseHandlers/DatabaseHandler.hh"
 
 using namespace std;
 using namespace pqxx;
 
+
+// select ew."Word" as word, rw."Word" as translate from public."EnglishWords" ew 
+// 	join public."EnglishToRussian" etr on ew.id="EnglishWordId" 
+// 	join public."RussianWords" rw on etr."RussianWordId"=rw."id"
+// 	where ew."Topic" in ('animal', 'it');
+
+
 int main(int argc, char *argv[])
 {
+  setlocale(LC_ALL, "ru_RU.UTF-8");
 
-  std::string sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-         "VALUES (6, 'Paul', 32, 'California', 20000.00 ); ";
-  DatabaseHandler::db_request(sql);
+  std::set<std::string> topics {"animal"};
 
-  
-  //  try {
-  //     connection C("dbname = test user = postgres password = 1953 \
-  //     hostaddr = 127.0.0.1 port = 5432");
-  //     if (C.is_open()) {
-  //        cout << "Opened database successfully: " << C.dbname() << endl;
-  //     } else {
-  //        cout << "Can't open database" << endl;
-  //        return 1;
-  //     }
-  //  } catch (const std::exception &e) {
-  //     cerr << e.what() << std::endl;
-  //     return 1;
-  //  }
+  DatabaseHandler::db_select(english, russian, topics);
 
+  std::cout << "\n\nRU to ENG\n\n";
+
+  DatabaseHandler::db_select(russian, english, topics);
 }
