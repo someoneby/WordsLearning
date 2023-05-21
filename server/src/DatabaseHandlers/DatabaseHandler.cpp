@@ -23,21 +23,10 @@ void DatabaseHandler::db_insert_if_absent(std::string_view sql)
     }
 }
 
-
 void DatabaseHandler::db_select(std::string_view sql)
 {
 
 }
-
-
-
-
-
-
-
-
-
-
 
 
 DatabaseHandler *DatabaseHandler::getInstance()

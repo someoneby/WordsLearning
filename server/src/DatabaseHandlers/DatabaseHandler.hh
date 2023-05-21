@@ -1,5 +1,7 @@
-#include <string>
+#pragma once
+
 #include <pqxx/pqxx>
+#include <string>
 
 struct DatabaseHandler
 {
