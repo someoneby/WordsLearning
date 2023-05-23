@@ -1,4 +1,4 @@
-#include "Session.hh"
+﻿#include "Session.hh"
 #include "../RequestHandler/RequestHandler.hh"
 
 const std::string messageEnd = "\n";
@@ -28,7 +28,7 @@ void Session::on_read() {
 	clearBuffer();
 
 	for(auto& handler : m_handlers) {
-		m_answers.push_back(handler->handleRequest(m_request));
+		//m_answers.push_back(handler->handleRequest(m_request));
 	}
 
 	do_write();

@@ -1,19 +1,22 @@
-#pragma once
+﻿#pragma once
 
 #include <pqxx/pqxx>
-#include <string>
+#include <iostream>
+#include <vector>
 
-struct DatabaseHandler
+#include "IDatabaseHandler.hh"
+
+struct DatabaseHandler : public IDatabaseHandler
 {
-    static void db_insert_if_absent(std::string_view sql);
-    static void db_select(std::string_view sql);
+    DatabaseHandler();
+    ~DatabaseHandler() override;
+
+    pqxx::result db_select(const ParsedRequest& request) const override;
 
 private:
-    DatabaseHandler(const std::string &connection);
+    std::string makeSqlRequest(const ParsedRequest& request) const;
 
-    static DatabaseHandler *getInstance();
+    static std::string getConnectionString();
 
-    static DatabaseHandler *m_instance;
-
-    pqxx::connection m_connection;
+    mutable pqxx::connection m_connection;
 };

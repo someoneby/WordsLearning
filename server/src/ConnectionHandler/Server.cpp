@@ -7,16 +7,7 @@ void Server::start()
 
 	m_start = true;
 
-	std::thread th([this]() {
-		while (true) {
-			std::cout << "\nActive sessions:";
-			for(auto sessionPair : m_activeSessions) {
-				std::cout << sessionPair.first << " " << sessionPair.second << "\n";
-			}
-			std::cout << "\n\n";
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-		}
-		});
+	std::thread th([this]() {handleActiveSessions(); });
 	th.detach();
 
 	acceptNewSession();
@@ -55,4 +46,18 @@ void Server::async_accept(std::shared_ptr<Session> session, const boost::system:
 void Server::acceptNewSession() {
 	auto session = Session::createSession(m_context, std::ref(m_requestHandlers));
 	m_acceptor.async_accept(session->getSocket(), std::bind(&Server::async_accept, this, session, std::placeholders::_1));
+}
+
+void Server::handleActiveSessions() {
+	while(true) {
+		std::this_thread::sleep_for(std::chrono::seconds(10));
+
+		auto now = std::time(nullptr);
+
+		for (auto activeSession : m_activeSessions) {
+			if (activeSession.second - now > 600 * 1000 || !m_start) {
+				activeSession.first->getSocket().cancel();
+			}
+		}
+	}
 }

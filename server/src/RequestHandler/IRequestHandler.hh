@@ -1,7 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include "../ConnectionHandler/ParsedRequest.hh"
 
 struct IRequestHandler {
-    virtual std::string handleRequest(std::string request) = 0;
+    virtual std::string handleRequest(const ParsedRequest& request) = 0;
 };

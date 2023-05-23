@@ -1,56 +1,85 @@
-#include <iostream>
+﻿#include <iostream>
 
 #include "DatabaseHandler.hh"
 #include "DatabaseConfig.hh"
 
-DatabaseHandler *DatabaseHandler::m_instance = nullptr;
-
-void DatabaseHandler::db_insert_if_absent(std::string_view sql)
-{
-    try
-    {
-        DatabaseHandler *dbInstance = getInstance();
-
-        pqxx::work W(dbInstance->m_connection);
-
-        W.exec(sql);
-
-        W.commit();
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-    }
+DatabaseHandler::DatabaseHandler() try : m_connection{DatabaseHandler::getConnectionString()} {}
+catch (const std::exception ex) {
+		std::cout << ex.what() << std::endl;
 }
 
-void DatabaseHandler::db_select(std::string_view sql)
-{
-
+DatabaseHandler::~DatabaseHandler() {
+	m_connection.close();
 }
 
-
-DatabaseHandler *DatabaseHandler::getInstance()
+pqxx::result DatabaseHandler::db_select(const ParsedRequest &request) const
 {
-    if (!m_instance)
-    {
-        std::string connection =
-            "dbname = " + DatabaseConfig::DB_NAME +
-            " user = " + DatabaseConfig::DB_USER +
-            " password = " + DatabaseConfig::DB_PASSWORD +
-            " hostaddr = " + DatabaseConfig::DB_HOSTADDR +
-            " port = " + DatabaseConfig::DB_PORT;
+	try
+	{
+		pqxx::nontransaction nontransaction(m_connection);
 
-        m_instance = new DatabaseHandler(connection);
-    }
+		std::string sqlRequest = makeSqlRequest(request);
+		if (sqlRequest.empty())
+		{
+			return pqxx::result();
+		}
 
-    return m_instance;
+		pqxx::result result(nontransaction.exec(sqlRequest));
+
+		return result;
+	}
+	catch (const std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 }
 
-DatabaseHandler::DatabaseHandler(const std::string &connection)
-try : m_connection{pqxx::connection(connection)}
+std::string DatabaseHandler::makeSqlRequest(const ParsedRequest &request) const
 {
+	if (!request.isValid())
+	{
+		return "";
+	}
+
+	std::string boundaryTableName, nativeWordId, translatedWordId;
+	if (request.nativeLanguage < request.learningLanguage)
+	{
+		boundaryTableName = request.nativeLanguage + "And" + request.learningLanguage;
+		nativeWordId = "wordIdLeft";
+		translatedWordId = "wordIdRight";
+	}
+	else
+	{
+		boundaryTableName = request.learningLanguage + "And" + request.nativeLanguage;
+		nativeWordId = "wordIdRight";
+		translatedWordId = "wordIdLeft";
+	}
+
+	std::string topics;
+	for (auto theme = request.themes.begin(); theme != request.themes.end(); theme++)
+	{
+		if (theme != request.themes.begin())
+		{
+			topics += " OR ";
+		}
+
+		topics += "l1.\"Topic\" LIKE \'%" + *theme + "%\'";
+	}
+
+	std::string sql_request = "SELECT l1.\"Word\", l2.\"Word\" FROM public.\"" + request.nativeLanguage + "\" l1 " +
+							  "JOIN public.\"" + boundaryTableName + "\" bounds ON l1.\"id\" = bounds.\"" + nativeWordId + "\" " +
+							  "JOIN public.\"" + request.learningLanguage + "\" l2 ON l2.\"id\" = bounds.\"" + translatedWordId + "\" " +
+							  "WHERE " + topics + ";";
+
+	return sql_request;
 }
-catch (const std::exception &e)
-{
-    std::cout << e.what() << std::endl;
+
+std::string DatabaseHandler::getConnectionString() {
+	static std::string connection =
+		"dbname = " + DatabaseConfig::DB_NAME +
+		" user = " + DatabaseConfig::DB_USER +
+		" password = " + DatabaseConfig::DB_PASSWORD +
+		" hostaddr = " + DatabaseConfig::DB_HOSTADDR +
+		" port = " + DatabaseConfig::DB_PORT;
+	return connection;
 }

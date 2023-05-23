@@ -19,6 +19,7 @@ struct Server
 private:
 	void async_accept(std::shared_ptr<Session> session, const boost::system::error_code& err);
 	void acceptNewSession();
+	void handleActiveSessions();
 
 	boost::asio::io_context m_context;
 	boost::asio::ip::tcp::acceptor m_acceptor;
