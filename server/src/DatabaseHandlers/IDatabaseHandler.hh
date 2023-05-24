@@ -1,12 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <pqxx/pqxx>
+#include <string>
 
 #include "../ConnectionHandler/ParsedRequest.hh"
 
 struct IDatabaseHandler {
-    virtual pqxx::result db_select(const ParsedRequest& request) const = 0;
+    virtual std::string db_select(const ParsedRequest& request) const = 0;
 
     virtual ~IDatabaseHandler() {};
 };

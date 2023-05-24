@@ -12,7 +12,7 @@ DatabaseHandler::~DatabaseHandler() {
 	m_connection.close();
 }
 
-pqxx::result DatabaseHandler::db_select(const ParsedRequest &request) const
+std::string DatabaseHandler::db_select(const ParsedRequest &request) const
 {
 	try
 	{
@@ -21,12 +21,12 @@ pqxx::result DatabaseHandler::db_select(const ParsedRequest &request) const
 		std::string sqlRequest = makeSqlRequest(request);
 		if (sqlRequest.empty())
 		{
-			return pqxx::result();
+			return "";
 		}
 
 		pqxx::result result(nontransaction.exec(sqlRequest));
 
-		return result;
+		return parseResult(result);
 	}
 	catch (const std::exception &e)
 	{
@@ -72,6 +72,17 @@ std::string DatabaseHandler::makeSqlRequest(const ParsedRequest &request) const
 							  "WHERE " + topics + ";";
 
 	return sql_request;
+}
+
+std::string DatabaseHandler::parseResult(const pqxx::result& result) const {
+	std::string parsedResult;
+	for (auto res : result) {
+		for (auto str : res) {
+			parsedResult += str.c_str();
+			parsedResult += ";";
+		}
+	}
+	return parsedResult;
 }
 
 std::string DatabaseHandler::getConnectionString() {
